@@ -1,0 +1,66 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : matmul_4x4_systolic
+Version: V-2023.12-SP5-1
+Date   : Fri Oct 23 06:26:13 2026
+****************************************
+
+ # A fanout number of 1000 was used for high fanout net computations.
+
+Operating Conditions: typical   Library: gscl45nm
+Wire Load Model Mode: top
+
+  Startpoint: u_systolic_pe_matrix/pe23/u_mac/b_flop_reg[1]
+              (rising edge-triggered flip-flop clocked by clk)
+  Endpoint: u_systolic_pe_matrix/pe23/u_mac/mult_reg[7]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk (rise edge)                                   0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  u_systolic_pe_matrix/pe23/u_mac/b_flop_reg[1]/CLK (DFFPOSX1)
+                                                          0.00 #     0.00 r
+  u_systolic_pe_matrix/pe23/u_mac/b_flop_reg[1]/Q (DFFPOSX1)
+                                                          0.11       0.11 f
+  U813/Y (AND2X2)                                         0.04       0.16 f
+  U1579/Y (XNOR2X1)                                       0.05       0.21 r
+  U745/Y (BUFX4)                                          0.03       0.24 r
+  U4994/YS (FAX1)                                         0.08       0.32 f
+  U1598/Y (INVX1)                                         0.04       0.36 r
+  U5000/YS (FAX1)                                         0.12       0.48 r
+  U5104/Y (OAI21X1)                                       0.03       0.51 f
+  U5105/Y (OAI21X1)                                       0.05       0.57 r
+  U1044/Y (INVX2)                                         0.02       0.58 f
+  U1042/Y (AND2X2)                                        0.04       0.63 f
+  U1043/Y (INVX1)                                         0.00       0.63 r
+  U5215/Y (AOI22X1)                                       0.03       0.66 f
+  U1041/Y (BUFX2)                                         0.04       0.70 f
+  U5220/YS (FAX1)                                         0.09       0.79 f
+  U858/Y (XNOR2X1)                                        0.07       0.86 r
+  U5221/YS (FAX1)                                         0.07       0.93 r
+  U5222/Y (NOR2X1)                                        0.01       0.94 f
+  u_systolic_pe_matrix/pe23/u_mac/mult_reg[7]/D (DFFPOSX1)
+                                                          0.00       0.94 f
+  data arrival time                                                  0.94
+
+  clock clk (rise edge)                                   1.00       1.00
+  clock network delay (ideal)                             0.00       1.00
+  u_systolic_pe_matrix/pe23/u_mac/mult_reg[7]/CLK (DFFPOSX1)
+                                                          0.00       1.00 r
+  library setup time                                     -0.06       0.94
+  data required time                                                 0.94
+  --------------------------------------------------------------------------
+  data required time                                                 0.94
+  data arrival time                                                 -0.94
+  --------------------------------------------------------------------------
+  slack (MET)                                                        0.00
+
+
+1
