@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : matmul_8x8_systolic
+Version: V-2023.12-SP5-1
+Date   : Sat Oct 24 20:04:24 2026
+****************************************
+
+Library(s) Used:
+
+    gscl45nm (File: /usr/local2/cadence/NCSU/SRC/FreePDK45/osu_soc/lib/files/gscl45nm.db)
+
+Number of ports:                        34166
+Number of nets:                        114091
+Number of cells:                        85532
+Number of combinational cells:          81795
+Number of sequential cells:              2803
+Number of macros/black boxes:               0
+Number of buf/inv:                      25373
+Number of references:                      18
+
+Combinational area:             212452.106902
+Buf/Inv area:                    37765.508864
+Noncombinational area:           22362.613804
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                234814.720706
+Total area:                 undefined
+1
