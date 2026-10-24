@@ -53,7 +53,7 @@ To run the Verdi-enabled simulation and open its waveform, run `make waves_verdi
 
 ## Synthesis
 
-The synthesis top is `matmul_8x8_systolic`. The source list includes the 8×8 wrapper, 4×4 implementation, and FP8 arithmetic dependencies; it excludes `matmul_with_ram.sv` and the testbench. The flow uses the FreePDK45 `gscl45nm` library and a 10 ns clock constraint (100 MHz), with 0.1 ns input/output delays and a 0.05 pF output load.
+The synthesis top is `matmul_8x8_systolic`. The source list includes the 8×8 wrapper, 4×4 implementation, and FP8 arithmetic dependencies; it excludes `matmul_with_ram.sv` and the testbench. The flow uses the FreePDK45 `gscl45nm` library and a 10 ns clock constraint (100 MHz), with 0.1 ns input/output delays, a 0.01 pF output load, and a 0.05 pF max-capacitance limit.
 
 From `PART3/synth`, after sourcing `PART3/env.cshrc` in the configured Synopsys shell, run:
 
@@ -84,7 +84,7 @@ The current synthesis reports document the 8×8 core. A matching 4×4 synthesis 
 | FP8 4×4 systolic | Not measured | — | — |
 | FP8 8×8 systolic | 234,814.720706 | 100 MHz | +1.746477 ns worst reported slack |
 
-The latest 8×8 constraint report contains max-capacitance violations. Most are associated with library cells whose max-capacitance attribute is zero; 97 reported violations are against the configured 0.05 pF design limit. The design-rule report should therefore not be described as violation-free.
+The FreePDK45 library contains cells with zero-valued max-capacitance attributes, so Design Compiler may still report internal max-capacitance warnings for those cells. The previously generated reports used a 0.05 pF output load and contained 38 output/address-port violations against the 0.05 pF limit. The flow now models a 0.01 pF core-boundary output load while retaining the 0.05 pF max-cap limit; updated reports could not be generated in this environment because Design Compiler reported that its license was not enabled.
 
 ## Architecture calculations
 

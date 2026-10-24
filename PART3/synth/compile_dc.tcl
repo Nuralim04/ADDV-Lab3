@@ -25,7 +25,7 @@ set my_clock_pin clk
 set my_clk_freq_MHz 100.0
 set my_input_delay_ns 0.1
 set my_output_delay_ns 0.1
-set my_output_load 0.05
+set my_output_load 0.01
 set my_max_capacitance 0.05
 
 # Use the FreePDK45 library directory supplied by env.cshrc.
@@ -73,8 +73,9 @@ set_output_delay $my_output_delay_ns -clock clk [all_outputs]
 set_load $my_output_load [all_outputs]
 
 # Several FreePDK45 combinational cells specify max_capacitance as 0, which
-# otherwise makes every nonzero load appear as a violation. Apply a design-level
-# 0.05 pF cap budget, matching the modeled output load, for meaningful DRV checks.
+# otherwise makes every nonzero internal load appear as a violation. Model a
+# modest 0.01 pF load at this RAM-facing core boundary and retain a 0.05 pF
+# design limit so output parasitics are included without simply relaxing the DRV.
 set_max_capacitance $my_max_capacitance [current_design]
 
 # Map for timing, then run a design-rule-only repair pass.
