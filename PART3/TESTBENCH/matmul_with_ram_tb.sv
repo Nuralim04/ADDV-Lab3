@@ -10,6 +10,7 @@ module matmul_8x8_tb;
     wire done;
     wire exception;
 
+
     // ============================================================
     // External RAM interfaces
     // ============================================================
@@ -171,15 +172,15 @@ module matmul_8x8_tb;
         // A = all 1.0
         // B = all 1.0
         //
-        // 1.0 FP8 = 8'h30
+        // FP8:
+        // 1.0 = 8'h30
         //
         // C[i][j] = 8.0
         //
-        // 8.0 FP8 = 8'h60
+        // FP8:
+        // 8.0 = 8'h60
         //
-        // Expected 32-bit C word:
-        //
-        // 32'h60606060
+        // Expected C RAM word = 32'h60606060
         // ========================================================
 
         $display("");
@@ -213,10 +214,7 @@ module matmul_8x8_tb;
 
 
         // --------------------------------------------------------
-        // Clear a larger C-memory range.
-        //
-        // We intentionally clear more than 8 locations because
-        // we're currently diagnosing the exact C address sequence.
+        // Clear C RAMs
         // --------------------------------------------------------
 
         for (i = 0; i < 16; i = i + 1) begin
@@ -236,13 +234,11 @@ module matmul_8x8_tb;
         resetn    = 1'b1;
         pe_resetn = 1'b1;
 
-
-        // Allow reset release to propagate.
         #60;
 
 
         // --------------------------------------------------------
-        // Start
+        // Start Test 1
         // --------------------------------------------------------
 
         $display(
@@ -254,7 +250,7 @@ module matmul_8x8_tb;
 
 
         // --------------------------------------------------------
-        // Wait for 8x8 completion
+        // Wait for completion
         // --------------------------------------------------------
 
         @(posedge done);
@@ -266,13 +262,12 @@ module matmul_8x8_tb;
 
         start = 1'b0;
 
-
         // Allow final RAM write to settle.
         #60;
 
 
         // ========================================================
-        // Exception check
+        // Exception check - Test 1
         // ========================================================
 
         if (exception !== 1'b0) begin
@@ -295,11 +290,6 @@ module matmul_8x8_tb;
 
         // ========================================================
         // Display C RAM contents
-        //
-        // IMPORTANT:
-        //
-        // Display addresses 0 through 11 so that we can determine
-        // the exact address range occupied by the eight C words.
         // ========================================================
 
         $display("");
@@ -335,13 +325,7 @@ module matmul_8x8_tb;
 
 
         // ========================================================
-        // Current checker
-        //
-        // Keep checking addresses 0-7 for now.
-        //
-        // DO NOT shift this to 2-9 merely to make the test pass.
-        // First we want to establish where the complete output
-        // stream actually lands.
+        // Check Test 1 result
         // ========================================================
 
         $display("");
@@ -380,7 +364,7 @@ module matmul_8x8_tb;
 
 
         // ========================================================
-        // Result for test 1
+        // Result for Test 1
         // ========================================================
 
         $display("");
@@ -388,7 +372,9 @@ module matmul_8x8_tb;
 
         if (errors == 0) begin
 
-            $display("PASS: test 1 all-ones matrix multiplication");
+            $display(
+                "PASS: test 1 all-ones matrix multiplication"
+            );
 
         end
         else begin
@@ -398,7 +384,9 @@ module matmul_8x8_tb;
                 errors
             );
 
-            $display("Test 1 failed; expected output at C[0]-C[7].");
+            $display(
+                "Test 1 failed; expected output at C[0]-C[7]."
+            );
 
         end
 
@@ -407,8 +395,113 @@ module matmul_8x8_tb;
 
 
         // ========================================================
-        // TEST 2: A = all 0.5, B = all 1.0
-        // Expected result: each C element is 4.0 (FP8 8'h50).
+        // RAM READBACK PHASE
+        //
+        // This phase is included specifically so the input and
+        // output matrix contents can be shown clearly in Verdi.
+        //
+        // All six external RAM read addresses are swept from
+        // address 0 through address 7.
+        //
+        // Expected during Test 1:
+        //
+        // A0/A1 = 30303030
+        // B0/B1 = 30303030
+        // C0/C1 = 60606060
+        //
+        // The RAM is synchronous, therefore each address is held
+        // long enough for the corresponding q1 output to update.
+        // ========================================================
+
+        $display("");
+        $display("============================================");
+        $display("TEST 1 RAM READBACK FOR VERDI");
+        $display("============================================");
+
+
+        for (i = 0; i < 8; i = i + 1) begin
+
+            // ----------------------------------------------------
+            // Apply external read address to all six RAM banks
+            // ----------------------------------------------------
+
+            bram_addr_a0_ext = i;
+            bram_addr_a1_ext = i;
+
+            bram_addr_b0_ext = i;
+            bram_addr_b1_ext = i;
+
+            bram_addr_c0_ext = i;
+            bram_addr_c1_ext = i;
+
+
+            // ----------------------------------------------------
+            // Wait for synchronous RAM read
+            // ----------------------------------------------------
+
+            @(posedge clk);
+
+            // Small delay lets NBA-updated q1 signals settle
+            // before printing the values.
+            #1;
+
+
+            // ----------------------------------------------------
+            // Display readback values
+            // ----------------------------------------------------
+
+            $display(
+                "ADDR %0d: A0=%h A1=%h B0=%h B1=%h C0=%h C1=%h",
+                i,
+                bram_rdata_a0_ext,
+                bram_rdata_a1_ext,
+                bram_rdata_b0_ext,
+                bram_rdata_b1_ext,
+                bram_rdata_c0_ext,
+                bram_rdata_c1_ext
+            );
+
+
+            // Hold each address for another clock so the address
+            // and corresponding data are easy to see in Verdi.
+            @(posedge clk);
+
+        end
+
+
+        // --------------------------------------------------------
+        // Return external addresses to zero
+        // --------------------------------------------------------
+
+        bram_addr_a0_ext = 10'd0;
+        bram_addr_a1_ext = 10'd0;
+
+        bram_addr_b0_ext = 10'd0;
+        bram_addr_b1_ext = 10'd0;
+
+        bram_addr_c0_ext = 10'd0;
+        bram_addr_c1_ext = 10'd0;
+
+        #40;
+
+
+        // ========================================================
+        // TEST 2
+        //
+        // A = all 0.5
+        // B = all 1.0
+        //
+        // Expected:
+        //
+        // C[i][j] = 8 � 0.5 � 1.0
+        //         = 4.0
+        //
+        // FP8:
+        // 0.5 = 8'h20
+        // 1.0 = 8'h30
+        // 4.0 = 8'h50
+        //
+        // Expected C RAM word = 32'h50505050
         // ========================================================
 
         $display("");
@@ -416,54 +509,132 @@ module matmul_8x8_tb;
         $display("TEST 2: 8x8 ALL 0.5 x ALL 1.0");
         $display("============================================");
 
+
+        // Reset before Test 2
         start     = 1'b0;
         resetn    = 1'b0;
         pe_resetn = 1'b0;
 
+
+        // --------------------------------------------------------
+        // Initialize Test 2 RAM contents
+        // --------------------------------------------------------
+
         for (i = 0; i < 8; i = i + 1) begin
+
             u_matmul.matrix_A0.ram[i] = 32'h20202020;
             u_matmul.matrix_A1.ram[i] = 32'h20202020;
+
             u_matmul.matrix_B0.ram[i] = 32'h30303030;
             u_matmul.matrix_B1.ram[i] = 32'h30303030;
+
             u_matmul.matrix_C0.ram[i] = 32'h00000000;
             u_matmul.matrix_C1.ram[i] = 32'h00000000;
+
         end
+
+
+        // --------------------------------------------------------
+        // Reset release
+        // --------------------------------------------------------
 
         #55;
+
         resetn    = 1'b1;
         pe_resetn = 1'b1;
+
         #60;
+
+
+        // --------------------------------------------------------
+        // Start Test 2
+        // --------------------------------------------------------
 
         start = 1'b1;
+
         @(posedge done);
+
         start = 1'b0;
+
         #60;
 
+
+        // ========================================================
+        // Exception check - Test 2
+        // ========================================================
+
         if (exception !== 1'b0) begin
-            $display("ERROR: exception asserted during test 2");
+
+            $display(
+                "ERROR: exception asserted during test 2"
+            );
+
             errors = errors + 1;
+
         end
+
+
+        // ========================================================
+        // Check Test 2 results
+        // ========================================================
 
         for (i = 0; i < 8; i = i + 1) begin
-            if (u_matmul.matrix_C0.ram[i] !== 32'h50505050) begin
-                $display("ERROR: TEST 2 C0[%0d] = %h, expected 50505050",
-                         i, u_matmul.matrix_C0.ram[i]);
+
+            if (u_matmul.matrix_C0.ram[i]
+                !== 32'h50505050) begin
+
+                $display(
+                    "ERROR: TEST 2 C0[%0d] = %h, expected 50505050",
+                    i,
+                    u_matmul.matrix_C0.ram[i]
+                );
+
                 errors = errors + 1;
+
             end
 
-            if (u_matmul.matrix_C1.ram[i] !== 32'h50505050) begin
-                $display("ERROR: TEST 2 C1[%0d] = %h, expected 50505050",
-                         i, u_matmul.matrix_C1.ram[i]);
+
+            if (u_matmul.matrix_C1.ram[i]
+                !== 32'h50505050) begin
+
+                $display(
+                    "ERROR: TEST 2 C1[%0d] = %h, expected 50505050",
+                    i,
+                    u_matmul.matrix_C1.ram[i]
+                );
+
                 errors = errors + 1;
+
             end
+
         end
+
+
+        // ========================================================
+        // Final result
+        // ========================================================
+
+        $display("");
 
         if (errors == 0) begin
-            $display("PASS: both 8x8 matrix multiplication tests");
+
+            $display(
+                "PASS: both 8x8 matrix multiplication tests"
+            );
+
         end
         else begin
-            $display("FAIL: %0d total error(s) across both tests", errors);
-            $fatal(1, "Part 3 simulation failed");
+
+            $display(
+                "FAIL: %0d total error(s) across both tests",
+                errors
+            );
+
+            $fatal(
+                1,
+                "Part 3 simulation failed"
+            );
+
         end
 
 
@@ -475,11 +646,14 @@ module matmul_8x8_tb;
 
     // ============================================================
     // Timeout
+    //
+    // Increased slightly because the Test 1 readback phase adds
+    // extra cycles before Test 2.
     // ============================================================
 
     initial begin
 
-        #10000;
+        #15000;
 
         $display("");
         $display("ERROR: Simulation timeout.");
@@ -502,4 +676,4 @@ module matmul_8x8_tb;
     end
 
 
-endmodule
+endmodule 
