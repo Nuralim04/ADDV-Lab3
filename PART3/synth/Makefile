@@ -1,5 +1,5 @@
 # Synopsys Design Compiler targets for the Part 1 asynchronous FIFO.
-# Source ../env.cshrc from Part1_Async_FIFO before invoking make.
+# Configure the synthesis tools in your shell before invoking make.
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 

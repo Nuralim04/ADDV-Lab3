@@ -1,6 +1,0 @@
-CASE 1: all_ones
-[875 ns] %Error: tb_matmul_apb.sv:100: Assertion failed in TOP.tb_matmul_apb.monitor: Unexpected C0 write
-%Error: tb/tb_matmul_apb.sv:100: Verilog $stop
-Aborting...
-
-Process return code: -6

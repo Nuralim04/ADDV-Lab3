@@ -15,7 +15,7 @@ RTL := $(shell cat rtl/files.f)
 help:
 	@echo 'Apporto: make compile; make sim CASE=all; make sim CASE=exception; make waves'
 	@echo 'Portable: make unit (Icarus); make verilator; make regress'
-	@echo 'FSDB requires VCS with the Verdi integration configured in env.cshrc/env.sh.'
+	@echo 'FSDB requires VCS with Verdi integration configured in your shell.'
 
 build logs:
 	mkdir -p $@
