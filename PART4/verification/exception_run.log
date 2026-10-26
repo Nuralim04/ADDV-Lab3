@@ -1,0 +1,5 @@
+CASE 1: invalid_inf_zero
+PASS: invalid_inf_zero, 64 results, flags=0001, C writes=8/8, active_edges=35
+PASS: Part 4 end-to-end, 1 runs, 64 checked matrix elements
+Signed-zero equivalences explicitly accepted: 0
+- tb/tb_matmul_apb.sv:288: Verilog $finish

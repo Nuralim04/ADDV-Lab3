@@ -1,0 +1,23 @@
+CASE 1: all_ones
+PASS: all_ones, 64 results, flags=0000, C writes=8/8, active_edges=35
+CASE 2: identity_varied
+PASS: identity_varied, 64 results, flags=0000, C writes=8/8, active_edges=35
+CASE 3: cross_tile_permutation
+PASS: cross_tile_permutation, 64 results, flags=0000, C writes=8/8, active_edges=35
+CASE 4: dense_signed
+NOTE: dense_signed C[7,5] zero sign: RTL=00 golden=80 (padding +0)
+NOTE: dense_signed C[0,6] zero sign: RTL=00 golden=80 (padding +0)
+NOTE: dense_signed C[4,6] zero sign: RTL=00 golden=80 (padding +0)
+NOTE: dense_signed C[5,6] zero sign: RTL=00 golden=80 (padding +0)
+PASS: dense_signed, 64 results, flags=0001, C writes=8/8, active_edges=35
+CASE 5: invalid_inf_zero
+PASS: invalid_inf_zero, 64 results, flags=0001, C writes=8/8, active_edges=35
+CASE 6: finite_overflow
+PASS: finite_overflow, 64 results, flags=0001, C writes=8/8, active_edges=35
+CASE 7: underflow_pulse
+PASS: underflow_pulse, 64 results, flags=0001, C writes=8/8, active_edges=35
+CASE 8: all_ones
+PASS: all_ones, 64 results, flags=0000, C writes=8/8, active_edges=35
+PASS: Part 4 end-to-end, 8 runs, 512 checked matrix elements
+Signed-zero equivalences explicitly accepted: 4
+- tb/tb_matmul_apb.sv:288: Verilog $finish

@@ -1,0 +1,9 @@
+rtl/lab3_apb_pkg.sv
+rtl/vendor/fp8_multiplier.sv
+rtl/vendor/fp8_adder.sv
+rtl/vendor/matmul.sv
+rtl/lab3_ram.sv
+rtl/matmul_8x8.sv
+rtl/matmul_8x8_with_ram.sv
+rtl/apb_matmul_csr.sv
+rtl/matmul_apb_top.sv

@@ -1,0 +1,169 @@
+--- a/PART3/RTL/matmul_8x8.sv
++++ b/PART3/RTL/matmul_8x8.sv
+@@ -91,12 +91,34 @@
+     // ============================================================
+     // Internal C connections
+     //
+-    // Bottom blocks shift their C results into the corresponding
+-    // top blocks.
++    // a_loc is the mathematical row group; b_loc is the column group.
++    // The team's names use 01 for bottom-left and 10 for top-right.
++    // Right-column tiles shift C into the corresponding left tiles.
+     // ============================================================
+ 
+     logic [`MAT_MUL_SIZE*`DWIDTH-1:0] c_link_left;
+     logic [`MAT_MUL_SIZE*`DWIDTH-1:0] c_link_right;
++
++    // The unchanged 4x4 tile keeps its raw C-valid high after eight
++    // useful words. Bound each bank's committed output stream so the
++    // parent RAM cannot overwrite memory beyond the result matrix.
++    logic raw_c_valid_0, raw_c_valid_1;
++    logic [3:0] c_words_0, c_words_1;
++
++    assign c_data_available_0 = raw_c_valid_0 && start_mat_mul &&
++                                !reset && (c_words_0 < 4'd8);
++    assign c_data_available_1 = raw_c_valid_1 && start_mat_mul &&
++                                !reset && (c_words_1 < 4'd8);
++
++    always_ff @(posedge clk) begin
++        if (reset || !start_mat_mul) begin
++            c_words_0 <= 4'd0;
++            c_words_1 <= 4'd0;
++        end else begin
++            if (c_data_available_0) c_words_0 <= c_words_0 + 1'b1;
++            if (c_data_available_1) c_words_1 <= c_words_1 + 1'b1;
++        end
++    end
+ 
+     // The 4x4 output logic's early done pulse leaves its write address
+     // two strides ahead when 8x8 result capture begins. Compensate here
+@@ -153,10 +175,11 @@
+     logic unused_c_available_10;
+     logic unused_c_available_11;
+ 
+-    logic [`MAT_MUL_SIZE*`DWIDTH-1:0] unused_a_out_01;
++    // Boundary data required by the bottom-right mathematical quadrant.
++    logic [`MAT_MUL_SIZE*`DWIDTH-1:0] a_from_bottom_left;
+     logic [`MAT_MUL_SIZE*`DWIDTH-1:0] unused_a_out_11;
+ 
+-    logic [`MAT_MUL_SIZE*`DWIDTH-1:0] unused_b_out_10;
++    logic [`MAT_MUL_SIZE*`DWIDTH-1:0] b_from_top_right;
+     logic [`MAT_MUL_SIZE*`DWIDTH-1:0] unused_b_out_11;
+ 
+ 
+@@ -190,10 +213,10 @@
+         .a_data_in                   ('0),
+         .b_data_in                   ('0),
+ 
+-        // Bottom-left C stream enters here.
++        // Top-right C stream enters here (team instance M10).
+         .c_data_in                   (c_link_left),
+ 
+-        // Final left-side C stream.
++        // Final C stream for rows 0..3.
+         .c_data_out                  (c_data_0),
+ 
+         .a_data_out                  (a_link_top),
+@@ -203,7 +226,7 @@
+         .b_addr                      (b_addr_0),
+         .c_addr                      (c_addr_0_raw),
+ 
+-        .c_data_available            (c_data_available_0),
++        .c_data_available            (raw_c_valid_0),
+ 
+         .validity_mask_a_rows        (4'b1111),
+         .validity_mask_a_cols_b_rows (4'b1111),
+@@ -219,7 +242,7 @@
+ 
+ 
+     // ============================================================
+-    // TOP-RIGHT 4x4 BLOCK
++    // BOTTOM-LEFT mathematical 4x4 BLOCK (team instance M01)
+     //
+     // a_loc = 1
+     // b_loc = 0
+@@ -253,17 +276,17 @@
+         // Bottom-right C stream enters here.
+         .c_data_in                   (c_link_right),
+ 
+-        // Final right-side C stream.
++        // Final C stream for rows 4..7.
+         .c_data_out                  (c_data_1),
+ 
+-        .a_data_out                  (unused_a_out_01),
++        .a_data_out                  (a_from_bottom_left),
+         .b_data_out                  (b_link_right),
+ 
+         .a_addr                      (a_addr_1),
+         .b_addr                      (unused_b_addr_01),
+         .c_addr                      (c_addr_1_raw),
+ 
+-        .c_data_available            (c_data_available_1),
++        .c_data_available            (raw_c_valid_1),
+ 
+         .validity_mask_a_rows        (4'b1111),
+         .validity_mask_a_cols_b_rows (4'b1111),
+@@ -279,7 +302,7 @@
+ 
+ 
+     // ============================================================
+-    // BOTTOM-LEFT 4x4 BLOCK
++    // TOP-RIGHT mathematical 4x4 BLOCK (team instance M10)
+     //
+     // a_loc = 0
+     // b_loc = 1
+@@ -308,14 +331,14 @@
+         .a_data_in                   (a_link_top),
+         .b_data_in                   ('0),
+ 
+-        // No block below this one.
++        // No further tile to the right.
+         .c_data_in                   ('0),
+ 
+-        // Feed lower-left C results into M00.
++        // Feed top-right C results into M00.
+         .c_data_out                  (c_link_left),
+ 
+         .a_data_out                  (a_link_bottom),
+-        .b_data_out                  (unused_b_out_10),
++        .b_data_out                  (b_from_top_right),
+ 
+         .a_addr                      (unused_a_addr_10),
+         .b_addr                      (b_addr_1),
+@@ -363,13 +386,13 @@
+         .a_data                      ('0),
+         .b_data                      ('0),
+ 
+-        .a_data_in                   (a_link_bottom),
+-        .b_data_in                   (b_link_right),
+-
+-        // No block below this one.
++        .a_data_in                   (a_from_bottom_left),
++        .b_data_in                   (b_from_top_right),
++
++        // No further tile to the right.
+         .c_data_in                   ('0),
+ 
+-        // Feed lower-right C results into M01.
++        // Feed bottom-right C results into M01.
+         .c_data_out                  (c_link_right),
+ 
+         .a_data_out                  (unused_a_out_11),
+@@ -410,10 +433,10 @@
+     //
+     //   32 - 8 - 1 + 1 = 24
+     //
+-    // The top blocks then output:
++    // The left-column mathematical tiles (M00 and M01) then output:
+     //
+     //   cycles 24-27 : their own four C words
+-    //   cycles 28-31 : four C words received from bottom blocks
++    //   cycles 28-31 : four C words received from right-column tiles
+     //
+     // The RAM samples c_data_out on the following clock edge, so
+     // the final word must be allowed to write before done is raised.
+@@ -479,4 +502,4 @@
+         exception_11;
+ 
+ 
+-endmodule+endmodule

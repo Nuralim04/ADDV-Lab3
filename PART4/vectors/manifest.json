@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "generator": "tools/generate_vectors.py",
+  "dimensions": [
+    8,
+    8
+  ],
+  "file_format": "64 two-digit hexadecimal bytes, one per line; row-major element order for A, B and C",
+  "model": "Exact rational arithmetic (fractions.Fraction), rounded by nearest representable-value table search",
+  "numeric_policy": {
+    "format": "E3M4: sign[7], exponent[6:4] bias 3, fraction[3:0]",
+    "normal_range": "0.25 through 15.5 in magnitude",
+    "exponent_zero": "All exponent-zero inputs are treated as signed zero; no denormals",
+    "underflow": "Every nonzero exact magnitude below 0.25 is flushed to signed zero before rounding, exception=1",
+    "rounding": "Round nearest, ties to even; inexact rounding alone is not an exception",
+    "overflow": "Round into exponent seven -> signed infinity, exception=1",
+    "special_values": "Infinity and NaN operands/results assert the combined exception; canonical NaN=0x78",
+    "accumulation": "For each C[row,col], start +0; for k=0..7 round A[row,k]*B[k,col], then round accumulator+product; no fused MAC",
+    "flags": "Bit 0: OR of all multiply/add exception events; bits 15:1 zero; no per-cause flag distinction"
+  },
+  "cases": [
+    {
+      "name": "all_ones",
+      "description": "All A and B elements are +1; every C element is +8 (0x60).",
+      "files": {
+        "a": "all_ones_a.mem",
+        "b": "all_ones_b.mem",
+        "c": "all_ones_c.mem"
+      },
+      "expected_flags": 0,
+      "expected_flags_hex": "0x0000",
+      "sha256": {
+        "a": "8958dd2280ac90bf8f45e83cf550ba4dd5c15ef0568de1dd4570591680c8132e",
+        "b": "8958dd2280ac90bf8f45e83cf550ba4dd5c15ef0568de1dd4570591680c8132e",
+        "c": "b834e0a8bb805aa5dc42f35625ac1eae7d2b9a4aa8716515dcf0c6c1fe8b1ace"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 0,
+        "add_exception_events": 0,
+        "finite_multiply_value_changes_from_rounding_or_flush": 0,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    },
+    {
+      "name": "identity_varied",
+      "description": "A is identity; B contains 64 distinct signed normal values; C must equal B.",
+      "files": {
+        "a": "identity_varied_a.mem",
+        "b": "identity_varied_b.mem",
+        "c": "identity_varied_c.mem"
+      },
+      "expected_flags": 0,
+      "expected_flags_hex": "0x0000",
+      "sha256": {
+        "a": "6370812bd2c79f0b6a96a85cb106063d6e7d8853f5f6d48fdc524e307f7472fd",
+        "b": "7298991660a09fecf96dae6bab134f83b131477c1742d88ac5112c58310f7688",
+        "c": "7298991660a09fecf96dae6bab134f83b131477c1742d88ac5112c58310f7688"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 0,
+        "add_exception_events": 0,
+        "finite_multiply_value_changes_from_rounding_or_flush": 0,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    },
+    {
+      "name": "cross_tile_permutation",
+      "description": "A permutes B rows as [4,0,7,3,1,6,2,5], crossing the 4x4 tile boundary.",
+      "files": {
+        "a": "cross_tile_permutation_a.mem",
+        "b": "cross_tile_permutation_b.mem",
+        "c": "cross_tile_permutation_c.mem"
+      },
+      "expected_flags": 0,
+      "expected_flags_hex": "0x0000",
+      "sha256": {
+        "a": "3d9e04627b9ccd1bade933424498fef1107165902622e462dc91dd169ceb2fcc",
+        "b": "7298991660a09fecf96dae6bab134f83b131477c1742d88ac5112c58310f7688",
+        "c": "0aa89991e8d22696baf7be6d0716e3d3d5fe82ad15f252cdc6090e56f7db6f11"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 0,
+        "add_exception_events": 0,
+        "finite_multiply_value_changes_from_rounding_or_flush": 0,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    },
+    {
+      "name": "dense_signed",
+      "description": "Deterministic dense signed normal matrices (magnitudes 0.5..1.25); exercises rounding and cancellation underflow.",
+      "files": {
+        "a": "dense_signed_a.mem",
+        "b": "dense_signed_b.mem",
+        "c": "dense_signed_c.mem"
+      },
+      "expected_flags": 1,
+      "expected_flags_hex": "0x0001",
+      "sha256": {
+        "a": "197b7cf047ef3791eaa8361a6066e16ff7156aa413483dfc5b50c2ef3b110f7d",
+        "b": "73c204ac9ebc79c15a912ad74c22d51895e3d9ac813499fcdb6958c2f838c564",
+        "c": "85cd173d3ff234d6e49d5bba9254fc0f0c0a71c9ee71fd442edd85195e100bd8"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 0,
+        "add_exception_events": 60,
+        "finite_multiply_value_changes_from_rounding_or_flush": 405,
+        "finite_add_value_changes_from_rounding_or_flush": 206
+      }
+    },
+    {
+      "name": "invalid_inf_zero",
+      "description": "A is +infinity; B is +zero; every product is invalid and every C element is canonical NaN (0x78).",
+      "files": {
+        "a": "invalid_inf_zero_a.mem",
+        "b": "invalid_inf_zero_b.mem",
+        "c": "invalid_inf_zero_c.mem"
+      },
+      "expected_flags": 1,
+      "expected_flags_hex": "0x0001",
+      "sha256": {
+        "a": "2da66ccbfbf6bd768e3bb388508c94cbd72ea793a8b8ccd02e32819307b9f007",
+        "b": "c50718f4f11455951654fa9f73972527baa9ab61e411a89e381185d116c4d6f0",
+        "c": "a5fa023207e58f08e0e9fb0f48101940fbe3fa76bed0e3b0110632f108e2384b"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 512,
+        "add_exception_events": 512,
+        "finite_multiply_value_changes_from_rounding_or_flush": 0,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    },
+    {
+      "name": "finite_overflow",
+      "description": "A and B are all +4; each scalar product 4 times 4 overflows FP8; every C element is +infinity (0x70).",
+      "files": {
+        "a": "finite_overflow_a.mem",
+        "b": "finite_overflow_b.mem",
+        "c": "finite_overflow_c.mem"
+      },
+      "expected_flags": 1,
+      "expected_flags_hex": "0x0001",
+      "sha256": {
+        "a": "830a15d11bea618a447f279ade1d00f4600df3d7cf6893004ec2449e4680f1f7",
+        "b": "830a15d11bea618a447f279ade1d00f4600df3d7cf6893004ec2449e4680f1f7",
+        "c": "2da66ccbfbf6bd768e3bb388508c94cbd72ea793a8b8ccd02e32819307b9f007"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 512,
+        "add_exception_events": 512,
+        "finite_multiply_value_changes_from_rounding_or_flush": 0,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    },
+    {
+      "name": "underflow_pulse",
+      "description": "A and B are all 0.25 (0x10); each product underflows to zero; every C is zero, and the sticky exception must outlast the live pulse.",
+      "files": {
+        "a": "underflow_pulse_a.mem",
+        "b": "underflow_pulse_b.mem",
+        "c": "underflow_pulse_c.mem"
+      },
+      "expected_flags": 1,
+      "expected_flags_hex": "0x0001",
+      "sha256": {
+        "a": "47d5bf4e9264c3cc4d92c56a8878604558ba43943c99e5f5988ee32ebfb89fd2",
+        "b": "47d5bf4e9264c3cc4d92c56a8878604558ba43943c99e5f5988ee32ebfb89fd2",
+        "c": "c50718f4f11455951654fa9f73972527baa9ab61e411a89e381185d116c4d6f0"
+      },
+      "golden_operation_counts": {
+        "multiply_operations": 512,
+        "add_operations": 512,
+        "multiply_exception_events": 512,
+        "add_exception_events": 0,
+        "finite_multiply_value_changes_from_rounding_or_flush": 512,
+        "finite_add_value_changes_from_rounding_or_flush": 0
+      }
+    }
+  ]
+}
